@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2026-06-23",
+    "domain": "example-lawfirm.com",
+    "firm_name": "Example Law Firm",
+    "practice_area": "immigration",
+    "decision_maker": "Jane Smith, Managing Partner",
+    "status": "package_generated",
+    "loom_done": false,
+    "linkedin_sent": false
+  }
+]
