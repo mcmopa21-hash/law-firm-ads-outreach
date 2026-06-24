@@ -113,7 +113,7 @@ Parse the output into a structured profile:
 - **Description(s)** — the offer/value prop they're using
 - **LSA attributes** — Google Verified, Speaks Spanish, etc.
 - **Practice areas advertised**
-- **Ad format mix** — image-heavy vs. text-heavy tells you if they're doing search or display
+- **Ad format mix** — note search ads vs. search ads with image extensions vs. Local Services Ads. In the Transparency Center, law firm ads showing an "image" format are almost always **search ads with image extensions** (RSAs with image assets attached), NOT Google Display Network / GDN display ads. Never label them as display ads.
 
 ---
 
@@ -168,7 +168,7 @@ Produce a clean, copy-paste-ready Loom package with these sections:
 ---
 
 **AD INTELLIGENCE SUMMARY**
-- Total ads: [N] ([X] search / [Y] display) — last active [date]
+- Total ads: [N] ([X] standard search / [Y] search+image extension / [Z] LSA) — last active [date]
 - Search headlines: [list, or "not decoded"]
 - Description: [text, or "not decoded"]
 - LSA attributes: [list]
@@ -180,7 +180,8 @@ Produce a clean, copy-paste-ready Loom package with these sections:
 - [ ] Generic description (no differentiator vs. competitors)
 - [ ] LSA attributes (Speaks Spanish / family-owned) not reflected in search ad copy
 - [ ] No urgency language for high-stakes practice area (deportation, criminal charges, etc.)
-- [ ] Display-heavy (17+ display ads, few search) → budget may be misallocated
+- [ ] Image extensions only on some campaigns — ads without image extensions get lower CTR and visibility in competitive markets
+- [ ] Social proof (star rating / review count) showing in one language campaign but absent from the other
 - [ ] No location-specific headline (city/state not in visible copy)
 - [ ] Competitor [name] running [X] more ads in same market
 
