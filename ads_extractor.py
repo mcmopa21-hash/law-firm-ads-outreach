@@ -246,7 +246,7 @@ def cmd_domain(domain, session=None):
     all_text_ads = []
     image_count = 0
     last_active = ""
-    all_attributes, all_practice_areas, all_badges, all_copy = [], [], [], []
+    all_attributes, all_practice_areas, all_badges, all_copy, all_image_urls = [], [], [], [], []
 
     for cid, ts in id_date_pairs:
         detail = get_creative_detail(s, advertiser_id, cid)
@@ -259,6 +259,9 @@ def cmd_domain(domain, session=None):
 
         if detail["format"] == "image":
             image_count += 1
+            img_url = detail.get("image_url", "")
+            if img_url and img_url not in all_image_urls:
+                all_image_urls.append(img_url)
         elif detail["format"] == "text":
             all_text_ads.append(detail)
             all_attributes.extend(a for a in detail.get("attributes", []) if a not in all_attributes)
@@ -291,6 +294,7 @@ def cmd_domain(domain, session=None):
         "badges": all_badges,
         "headlines": headlines,
         "descriptions": descriptions,
+        "image_urls": all_image_urls[:10],
     }
 
 

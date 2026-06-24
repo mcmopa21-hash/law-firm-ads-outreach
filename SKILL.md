@@ -117,7 +117,9 @@ Parse the output into a structured profile:
 
 ---
 
-### STEP 4 — Find and analyze competitors
+### STEP 4 — Find and analyze competitors (MANDATORY — do not skip)
+
+This step is required before generating any Loom package. The competitor comparison is a core part of the outreach value — it shows Camila has done real market research, not just looked at one firm in isolation.
 
 The Transparency Center search matches advertiser *names*, not keywords — so city-specific searches often return nothing. Use a two-step approach:
 
@@ -125,17 +127,33 @@ The Transparency Center search matches advertiser *names*, not keywords — so c
 Search: `"[practice area] attorney [city]" google ads`
 Also search: `[practice area] law firm [city]` to find 3–5 local firm websites.
 
-**Step 4b — Verify each competitor in the Transparency Center:**
+**Step 4b — Run the extractor on each competitor domain:**
 ```bash
 /tmp/gads-test/bin/python3 ~/.claude/skills/law-firm-outreach/ads_extractor.py domain <competitor_domain>
 ```
 Run this for each of the 3–5 local competitors found. Skip any that return "not found."
+
+The extractor now returns `image_urls` in its output. For each competitor with image ads, **download and read at least 2 images** to capture their actual headline, description, and visual approach:
+```bash
+curl -s -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" "<image_url>" -o /tmp/<firm>_ad01.jpg
+```
+Then Read the downloaded file to see the ad creative.
 
 **Step 4c — Fallback to national competitors if local returns < 2:**
 ```bash
 /tmp/gads-test/bin/python3 ~/.claude/skills/law-firm-outreach/ads_extractor.py search "<practice area> attorney" --count 10
 ```
 Pick the 2 with the highest ad counts and run `domain` on them. Note in the Loom package that these are national competitors, not local.
+
+**What to capture for each competitor:**
+- Ad count (volume vs. target firm)
+- Last active date (active vs. paused)
+- Headline(s) read from images
+- Description copy
+- Whether they show star ratings / review count
+- Whether they use personal attorney photos vs. stock
+- Spanish-language presence
+- Any obvious messaging mistakes (e.g., using contingency pricing language for a non-contingency practice)
 
 **Minimum to proceed:** at least 10 ads analyzed in total across the target firm and its competitors combined. If the target firm has fewer than 10 ads, analyze 3 competitors fully to reach that threshold. Never generate the Loom package with fewer than 10 total ads reviewed.
 
@@ -216,11 +234,13 @@ If no headline decoded: use LSA attribute or ad count observation instead.
 ---
 
 **COMPETITOR INTEL**
-| Competitor | Ads | Notes |
-|---|---|---|
-| [name] | [N] | [any observation] |
-| [name] | [N] | |
-| [name] | [N] | |
+| Competitor | Ads | Last Active | Headline Seen | Key Observation |
+|---|---|---|---|---|
+| [name] | [N] | [date] | [actual headline from image] | [e.g. stock photos only, no Spanish, paused 6mo] |
+| [name] | [N] | [date] | [actual headline] | [observation] |
+| [name] | [N] | [date] | [actual headline] | [observation] |
+
+**Market position summary:** note whether the target firm is the dominant advertiser by volume, or being outspent. This determines the framing in the Loom script (conversion gap vs. visibility gap).
 
 ---
 
