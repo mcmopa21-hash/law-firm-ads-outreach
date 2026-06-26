@@ -65,39 +65,50 @@ Commands:
 ### Mode 1: Analyze a specific domain
 Triggered by: "analyze [domain]" or "generate loom package for [domain]"
 
-### Mode 2: Daily prospecting batch
-Triggered by: "find law firms for outreach", "run daily prospecting"
-- Ask for: practice area + city (if not provided)
-- Default batch size: 5 firms per run
+### Mode 2: Process leads from the Google Sheet (PRIMARY DAILY MODE)
+Triggered by: "run daily outreach", "process sheet leads", "run outreach"
+- Reads all rows with Status = "new" from the "Law Firm Outreach Pipeline" sheet
+- Processes each firm (Steps 3–7) using data already in the sheet row
+- Writes results back to the same row: Areas of Opportunity, Competitor Intel, LinkedIn Message, Loom Script
+- Updates Status to "analyzed"
+
+### Mode 3: Manual batch (no sheet)
+Triggered by: "find law firms for outreach" with no sheet set up
+- Ask for practice area + city
+- Default batch size: 5 firms
+- Log to outreach_log.json instead of sheet
 
 ---
 
 ## Step-by-Step Execution
 
-### STEP 1 — Ensure extractor is ready
+### STEP 1 — Ensure tools are ready
 
 ```bash
-/tmp/gads-test/bin/python3 -c "import requests; print('ok')" 2>/dev/null || (source ~/.local/bin/env && uv venv /tmp/gads-test && /tmp/gads-test/bin/pip install requests -q && echo "installed")
+/tmp/gads-test/bin/python3 -c "import requests, gspread; print('ok')" 2>/dev/null || (source ~/.local/bin/env && uv pip install --python /tmp/gads-test requests gspread google-auth-oauthlib google-auth-httplib2 -q && echo "installed")
 ```
 
 ---
 
-### STEP 2 — Discover firms (Mode 2 only)
+### STEP 2 — Load firms to process
 
-Ask Camila for practice area and city if not provided. Then run:
-
+**Mode 2 (from sheet):**
 ```bash
-/tmp/gads-test/bin/python3 ~/.claude/skills/law-firm-outreach/ads_extractor.py search "<practice area> attorney <city>" --count 20
+/tmp/gads-test/bin/python3 ~/.claude/skills/lead-discovery/sheets.py get-new-leads
 ```
 
-Filter results:
-- `total_ads >= 5` — proxy for meaningful spend
-- `last_active` within last 30 days (or unknown — include if uncertain)
-- Skip any domain already in `outreach_log.json`
+This returns a JSON array of rows with Status = "new". Each row already has:
+- `Website` — the domain to analyze
+- `Practice Area` — pre-identified
+- `City/State` — pre-identified
+- `Decision Maker` + `LinkedIn URL` — pre-found by lead discovery
+- `Discovery Signal` — WHY this firm was flagged (e.g., "38 active ads", "hiring marketing director")
 
-Select the 5 best candidates (highest ad count = highest spend signal).
+**The discovery signal is important.** Reference it in the Loom script and LinkedIn note — it's why Camila noticed them, and it makes the outreach specific.
 
-For Mode 1 (specific domain), skip to Step 3 directly.
+**Mode 1 (specific domain):** skip to Step 3 directly with the provided domain.
+
+**Mode 3 (manual):** ask for practice area + city, use the extractor search, skip to Step 3.
 
 ---
 
@@ -210,6 +221,8 @@ Produce a clean, copy-paste-ready Loom package with these sections:
 *[0:00–0:15] Hook*
 "I spent 20 minutes looking at your Google Ads through the Transparency Center — you're actively running [N] ads. I found [one specific thing]. Wanted to share it before I moved on."
 
+If the discovery signal was a job posting or marketing complaint, reference it: "I came across [the job posting for your marketing director / your post about marketing ROI] and figured I'd look at your ads before reaching out."
+
 *[0:15–1:00] What I See*
 "Here's what's showing up publicly for [Firm Name]... [walk through: headline, description, LSA attributes, badge status]. The headline you're leading with is '[headline]'. The description is '[description]'. A few things stood out to me..."
 [Name the 2–3 gaps — specific, not generic]
@@ -244,24 +257,28 @@ If no headline decoded: use LSA attribute or ad count observation instead.
 
 ---
 
-### STEP 7 — Log the firm
+### STEP 7 — Write results to the Google Sheet
 
-Append to `~/.claude/skills/law-firm-outreach/outreach_log.json`:
+**Mode 2 (from sheet):** write back to the firm's row using the website as the key:
 
+```bash
+/tmp/gads-test/bin/python3 ~/.claude/skills/lead-discovery/sheets.py update-row <website> '<json>'
+```
+
+JSON fields to write:
 ```json
 {
-  "date": "YYYY-MM-DD",
-  "domain": "example.com",
-  "firm_name": "Firm Name",
-  "practice_area": "immigration",
-  "decision_maker": "Name or unknown",
-  "status": "package_generated",
-  "loom_done": false,
-  "linkedin_sent": false
+  "opportunities": "1. English ads missing 4.9★ rating shown in Spanish ads\n2. Duplicate description copy across 2 Spanish ads\n3. Free vs. paid consult CTA contradiction",
+  "competitor_intel": "Manji Law: 7 ads, stock photos, no ratings shown. Ross & Pines: 6 ads, running contingency-model headline for immigration (wrong). Chavarro: paused 6mo. Tadeo & Silva dominates by volume 3-4x.",
+  "linkedin_message": "Massiel — your Spanish ads show 4.9★ with 270+ reviews, but your English search ads don't. One line of copy. Helped an estate/family firm +176% signed clients same spend. Worth 15 min?",
+  "loom_script": "[full timestamped script]",
+  "status": "analyzed"
 }
 ```
 
-Read the file first. If it doesn't exist, create it as an empty array `[]`. Append the new entry and write back.
+Keep `opportunities` and `competitor_intel` as concise multi-line text — the sheet cell should be scannable, not the full Loom package. Save the full Loom package in `loom_script`.
+
+**Mode 1 / Mode 3 (no sheet):** append to `outreach_log.json` as before.
 
 ---
 
@@ -272,18 +289,19 @@ After processing all firms in a batch, output:
 ```
 DAILY OUTREACH BATCH — [date]
 ================================
-[N] firms analyzed
+[N] firms analyzed from sheet
 
 1. [Firm Name] ([domain]) — [practice area] — [N] ads
-   Decision maker: [name or "search manually"]
+   Discovery signal: [why they were flagged]
+   Decision maker: [name]
    Top finding: [one sentence]
    Case study match: [which]
-   LinkedIn note ready: YES
+   Sheet updated: YES
 
 [repeat for each firm]
 
-Next: Record Loom videos, then send connection notes.
-Firms logged to outreach_log.json.
+Next: Record Loom videos, then send LinkedIn connection notes.
+Sheet: [URL]
 ```
 
 ---
