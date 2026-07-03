@@ -30,6 +30,8 @@ For each target law firm, this skill:
 | `ads_extractor.py` | Python tool that queries the Google Ads Transparency Center |
 | `requirements.txt` | Python dependencies (`requests`) |
 | `outreach_log.example.json` | Schema for the tracking log |
+| `lead-discovery/SKILL.md` | Finds and qualifies new law firm leads, populates the pipeline sheet |
+| `linkedin-content-creation/SKILL.md` | Writes Camila's LinkedIn thought-leadership content (TOFU/MOFU/BOFU system) |
 
 ---
 
